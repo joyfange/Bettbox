@@ -1,0 +1,59 @@
+name: build-android
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  GRADLE_OPTS: -Dorg.gradle.vfs.watch=false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.9
+          cache: true
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+          cache: true
+          cache-dependency-path: core/go.sum
+
+      - name: Free disk space
+        shell: bash
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup
+          df -h /
+
+      - name: Build Bettbox
+        shell: bash
+        run: |
+          flutter pub get
+          dart run build_runner build -d
+          dart setup.dart android --arch arm64
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bettbox-android-arm64
+          path: |
+            build/app/outputs/flutter-apk/*.apk
+            dist/*.apk
+          if-no-files-found: warn
+          retention-days: 90

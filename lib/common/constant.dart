@@ -49,7 +49,10 @@ const customSidebarIconKey = 'custom_sidebar_icon';
 const customDashboardTitleKey = 'custom_dashboard_title';
 const homeBackgroundLightKey = 'home_background_light';
 const homeBackgroundDarkKey = 'home_background_dark';
+<<<<<<< HEAD
 const homeBackgroundBlurKey = 'home_background_blur';
+=======
+>>>>>>> origin/main
 const double dialogCommonWidth = 300;
 const repository = 'appshubcc/Bettbox';
 const defaultExternalController = '127.0.0.1:9090';
