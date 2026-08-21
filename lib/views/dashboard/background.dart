@@ -175,11 +175,13 @@ class HomeBackground extends ConsumerWidget {
             ),
           ),
         Positioned.fill(
-          child: ColoredBox(
-            color: Colors.black.withValues(alpha: state.opacity),
+          child: Container(
+            color: brightness == Brightness.dark
+                ? Colors.black.withValues(alpha: state.opacity)
+                : Colors.white.withValues(alpha: state.opacity),
+            child: child,
           ),
         ),
-        Positioned.fill(child: child),
       ],
     );
   }
