@@ -44,7 +44,7 @@ class HomeBackgroundNotifier extends StateNotifier<HomeBackgroundState> {
   }
 
   Future<String?> _pickImage() async {
-    if (system.isAndroid || system.isIOS) {
+    if (system.isAndroid || Platform.isIOS) {
       final xFile = await ImagePicker().pickImage(
         source: ImageSource.gallery,
         imageQuality: 90,
@@ -227,8 +227,8 @@ class _BackgroundTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(homeBackgroundProvider.notifier);
     final hasImage = path != null && File(path).existsSync();
-    return GestureDetector(
-      onLongPress: () {
+    final imagePath = path;
+    return GestureDetector(      onLongPress: () {
         HapticFeedback.lightImpact();
         notifier.clear(brightness);
       },
@@ -244,7 +244,7 @@ class _BackgroundTile extends ConsumerWidget {
             ),
             image: hasImage
                 ? DecorationImage(
-                    image: FileImage(File(path!)),
+                    image: FileImage(File(imagePath!)),
                     fit: BoxFit.cover,
                   )
                 : null,
