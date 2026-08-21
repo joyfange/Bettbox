@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/widgets/widgets.dart';
@@ -11,23 +10,15 @@ import 'package:image_picker/image_picker.dart';
 class HomeBackgroundState {
   final String? light;
   final String? dark;
-  final double blur; // 0.0 = no blur, 1.0 = max blur
+  final double blur;
 
-  const HomeBackgroundState({
-    this.light,
-    this.dark,
-    this.blur = 0.0,
-  });
+  const HomeBackgroundState({this.light, this.dark, this.blur = 0.0});
 
-  String? pathOf(Brightness brightness) {
-    return brightness == Brightness.dark ? dark : light;
-  }
+  String? pathOf(Brightness brightness) =>
+      brightness == Brightness.dark ? dark : light;
 
-  HomeBackgroundState copyWith({
-    String? light,
-    String? dark,
-    double? blur,
-  }) {
+  HomeBackgroundState copyWith(
+      {String? light, String? dark, double? blur}) {
     return HomeBackgroundState(
       light: light ?? this.light,
       dark: dark ?? this.dark,
@@ -70,20 +61,21 @@ class HomeBackgroundNotifier extends StateNotifier<HomeBackgroundState> {
     return file?.path;
   }
 
-  Future<bool> update(Brightness brightness) async {
+  Future<bool> setBackground(Brightness brightness) async {
     try {
       final sourcePath = await _pickImage();
       if (sourcePath == null) return false;
       final dataDir = await appPath.dataDir.future;
-      final dir = Directory('${dataDir.path}${Platform.pathSeparator}backgrounds');
+      final dir = Directory(
+          '${dataDir.path}${Platform.pathSeparator}backgrounds');
       await dir.create(recursive: true);
-      final ext = sourcePath.contains('.') ? sourcePath.split('.').last : 'png';
+      final ext = sourcePath.contains('.')
+          ? sourcePath.split('.').last
+          : 'png';
       final destPath =
-          '${dir.path}${Platform.pathSeparator}home_bg_${brightness.name}.${ext}';
+          '${dir.path}${Platform.pathSeparator}home_bg_${brightness.name}.$ext';
       final destFile = File(destPath);
-      if (await destFile.exists()) {
-        await destFile.delete();
-      }
+      if (await destFile.exists()) await destFile.delete();
       await File(sourcePath).copy(destPath);
       await _persist(brightness, destPath);
       return true;
@@ -92,20 +84,18 @@ class HomeBackgroundNotifier extends StateNotifier<HomeBackgroundState> {
     }
   }
 
-  Future<void> clear(Brightness brightness) async {
+  Future<void> clearBackground(Brightness brightness) async {
     final path = state.pathOf(brightness);
     if (path != null) {
       try {
         final file = File(path);
-        if (await file.exists()) {
-          await file.delete();
-        }
+        if (await file.exists()) await file.delete();
       } catch (_) {}
     }
     await _persist(brightness, null);
   }
 
-  Future<void> updateBlur(double value) async {
+  Future<void> setBlur(double value) async {
     state = state.copyWith(blur: value);
     final prefs = await preferences.sharedPreferencesCompleter.future;
     prefs?.setDouble(homeBackgroundBlurKey, value);
@@ -117,24 +107,18 @@ class HomeBackgroundNotifier extends StateNotifier<HomeBackgroundState> {
         : HomeBackgroundState(light: path, dark: state.dark, blur: state.blur);
     final prefs = await preferences.sharedPreferencesCompleter.future;
     if (path == null) {
-      prefs?.remove(
-        brightness == Brightness.dark
-            ? homeBackgroundDarkKey
-            : homeBackgroundLightKey,
-      );
+      prefs?.remove(brightness == Brightness.dark
+          ? homeBackgroundDarkKey
+          : homeBackgroundLightKey);
     } else {
-      prefs?.setString(
-        brightness == Brightness.dark
-            ? homeBackgroundDarkKey
-            : homeBackgroundLightKey,
-        path,
-      );
+      prefs?.setString(brightness == Brightness.dark
+          ? homeBackgroundDarkKey
+          : homeBackgroundLightKey, path);
     }
   }
 }
 
-/// Renders a home background image (light/dark aware) behind [child],
-/// with a scrim overlay and optional blur to keep content readable.
+/// 首页背景层：图片 + 模糊 + 遮罩
 class HomeBackground extends ConsumerWidget {
   final Widget child;
 
@@ -146,16 +130,13 @@ class HomeBackground extends ConsumerWidget {
     final brightness = Theme.of(context).brightness;
     final rawPath = state.pathOf(brightness);
     final hasImage = rawPath != null && File(rawPath!).existsSync();
-    if (!hasImage) {
-      return child;
-    }
-    final imagePath = rawPath!;
+    if (!hasImage) return child;
     final blur = state.blur;
     return Stack(
       children: [
         Positioned.fill(
           child: Image.file(
-            File(imagePath),
+            File(rawPath!),
             fit: BoxFit.cover,
             gaplessPlayback: true,
             errorBuilder: (_, _, _) => const SizedBox(),
@@ -164,10 +145,7 @@ class HomeBackground extends ConsumerWidget {
         if (blur > 0.01)
           Positioned.fill(
             child: BackdropFilter(
-              filter: ImageFilter.blur(
-                sigmaX: blur * 20.0,
-                sigmaY: blur * 20.0,
-              ),
+              filter: ImageFilter.blur(sigmaX: blur * 20, sigmaY: blur * 20),
               child: const SizedBox.expand(),
             ),
           ),
@@ -184,167 +162,214 @@ class HomeBackground extends ConsumerWidget {
   }
 }
 
-String _tr(BuildContext context, String zh, String en) {
-  final locale = Localizations.maybeLocaleOf(context);
-  return locale?.languageCode == 'zh' ? zh : en;
+/// 背景设置入口：在 CommonScaffold 的 actions 里使用
+List<Widget> buildHomeBackgroundActions(BuildContext context) {
+  return [
+    IconButton(
+      tooltip: '背景',
+      onPressed: () => _showBackgroundSheet(context),
+      icon: const Icon(Icons.wallpaper),
+    ),
+  ];
 }
 
-void showHomeBackgroundSheet(BuildContext context) {
+void _showBackgroundSheet(BuildContext context) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    builder: (ctx) {
-      return SafeArea(
-        child: Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom,
-          ),
-          child: _HomeBackgroundSheetBody(),
-        ),
-      );
-    },
+    backgroundColor: Colors.transparent,
+    builder: (ctx) => const _BackgroundSheet(),
   );
 }
 
-class _HomeBackgroundSheetBody extends ConsumerWidget {
-  const _HomeBackgroundSheetBody();
+class _BackgroundSheet extends ConsumerWidget {
+  const _BackgroundSheet();
+
+  String _tr(BuildContext context, String zh, String en) {
+    final locale = Localizations.maybeLocaleOf(context);
+    return locale?.languageCode == 'zh' ? zh : en;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(homeBackgroundProvider);
     final notifier = ref.read(homeBackgroundProvider.notifier);
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _BackgroundTile(
-            title: _tr(context, '白天模式背景', 'Light mode background'),
-            path: state.light,
-            brightness: Brightness.light,
-          ),
-          const SizedBox(height: 12),
-          _BackgroundTile(
-            title: _tr(context, '夜晚模式背景', 'Dark mode background'),
-            path: state.dark,
-            brightness: Brightness.dark,
-          ),
-          const SizedBox(height: 20),
-          Text(
-            _tr(context, '背景模糊度', 'Background blur'),
-            style: Theme.of(context).textTheme.labelLarge,
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(
-                Icons.blur_off,
-                size: 18,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+    final brightness = Theme.of(context).brightness;
+    final currentPath = state.pathOf(brightness);
+    final hasImage = currentPath != null && File(currentPath).existsSync();
+    final label = brightness == Brightness.dark ? '夜晚' : '白天';
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.55,
+      minChildSize: 0.4,
+      maxChildSize: 0.85,
+      builder: (ctx, scrollController) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(ctx).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Theme.of(ctx).colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
               ),
-              Expanded(
-                child: Slider(
-                  value: state.blur,
-                  min: 0.0,
-                  max: 1.0,
-                  divisions: 20,
-                  label: '${(state.blur * 100).round()}%',
-                  onChanged: (v) => notifier.updateBlur(v),
-                ),
-              ),
-              Icon(
-                Icons.blur_on,
-                size: 18,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _tr(
-              context,
-              '点击选择图片，长按清除背景；滑动调节模糊度，切换昼夜模式时自动更换对应图片。',
-              'Tap to pick an image, long press to clear; drag to adjust blur; auto-switches with light/dark mode.',
             ),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-          ),
-          const SizedBox(height: 16),
-        ],
+            const SizedBox(height: 16),
+            Text(
+              _tr(context, '设置首页背景', 'Home background'),
+              style: Theme.of(ctx).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 20),
+            Flexible(
+              child: ListView(
+                controller: scrollController,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                shrinkWrap: true,
+                children: [
+                  // 当前模式背景
+                  _ModeTile(
+                    label: '$label 模式背景',
+                    path: currentPath,
+                    onTap: () => notifier.setBackground(brightness),
+                    onClear: () => notifier.clearBackground(brightness),
+                    hasImage: hasImage,
+                  ),
+                  const SizedBox(height: 12),
+                  // 模糊度
+                  Text(
+                    _tr(context, '背景模糊度', 'Blur'),
+                    style: Theme.of(ctx).textTheme.labelLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.blur_off, size: 18,
+                          color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                      Expanded(
+                        child: Slider(
+                          value: state.blur,
+                          min: 0.0,
+                          max: 1.0,
+                          divisions: 20,
+                          label: '${(state.blur * 100).round()}%',
+                          onChanged: (v) => notifier.setBlur(v),
+                        ),
+                      ),
+                      Icon(Icons.blur_on, size: 18,
+                          color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _tr(
+                      context,
+                      '调节模糊度可以降低背景对操作界面的干扰，0% 为原图清晰度，100% 为最强模糊。',
+                      'Drag to adjust blur. 0% = sharp, 100% = maximum blur.',
+                    ),
+                    style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _BackgroundTile extends ConsumerWidget {
-  final String title;
+class _ModeTile extends StatelessWidget {
+  final String label;
   final String? path;
-  final Brightness brightness;
+  final VoidCallback onTap;
+  final VoidCallback onClear;
+  final bool hasImage;
 
-  const _BackgroundTile({
-    required this.title,
+  const _ModeTile({
+    required this.label,
     required this.path,
-    required this.brightness,
+    required this.onTap,
+    required this.onClear,
+    required this.hasImage,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final notifier = ref.read(homeBackgroundProvider.notifier);
-    final hasImage = path != null && File(path!).existsSync();
-    final tilePath = path!;
-    return GestureDetector(
-      onLongPress: () {
-        HapticFeedback.lightImpact();
-        notifier.clear(brightness);
-      },
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => notifier.update(brightness),
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      onLongPress: onClear,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        height: 88,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+          image: hasImage
+              ? DecorationImage(
+                  image: FileImage(File(path!)),
+                  fit: BoxFit.cover,
+                )
+              : null,
+          color: hasImage
+              ? null
+              : Theme.of(context).colorScheme.surfaceContainerHigh,
+        ),
         child: Container(
-          height: 88,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
-            image: hasImage
-                ? DecorationImage(
-                    image: FileImage(File(tilePath)),
-                    fit: BoxFit.cover,
-                  )
-                : null,
-            color: hasImage
-                ? null
-                : Theme.of(context).colorScheme.surfaceContainerHigh,
+            color: Colors.black.withValues(alpha: 0.35),
           ),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.black.withValues(alpha: 0.35),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Icon(
-                  hasImage ? Icons.wallpaper : Icons.add_photo_alternate_outlined,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Icon(
+                hasImage ? Icons.wallpaper : Icons.add_photo_alternate_outlined,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                if (hasImage)
-                  const Icon(Icons.check_circle, color: Colors.white),
-              ],
-            ),
+              ),
+              if (hasImage)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.check_circle, color: Colors.white),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white70,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        minimumSize: const Size(0, 32),
+                      ),
+                      onPressed: onClear,
+                      child: const Text('清除'),
+                    ),
+                  ],
+                )
+              else
+                const Icon(Icons.add, color: Colors.white),
+            ],
           ),
         ),
       ),

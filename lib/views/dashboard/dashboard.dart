@@ -111,13 +111,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               )
             : SizedBox();
       }),
-      IconButton(
-        tooltip: '背景',
-        onPressed: () {
-          showHomeBackgroundSheet(context);
-        },
-        icon: const Icon(Icons.wallpaper),
-      ),
+      ...buildHomeBackgroundActions(context),
       Material(
         type: MaterialType.transparency,
         shape: const CircleBorder(),
