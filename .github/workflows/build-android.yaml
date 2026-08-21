@@ -48,7 +48,7 @@ jobs:
           dart run build_runner build -d
           dart setup.dart android --arch arm64
 
-      - name: Upload APK to Artifacts
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Bettbox-android-arm64
@@ -57,20 +57,3 @@ jobs:
             dist/*.apk
           if-no-files-found: warn
           retention-days: 90
-
-      - name: Create/Update Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: nightly
-          name: Bettbox Nightly (最新构建)
-          body: |
-            自动构建于 ${{ github.sha }}
-            基于 Bettbox 1.19.0 添加首页自定义背景功能
-          draft: false
-          prerelease: true
-          files: |
-            build/app/outputs/flutter-apk/*.apk
-            dist/*.apk
-          overwrite_files: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
