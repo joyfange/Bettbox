@@ -45,7 +45,7 @@ jobs:
         shell: bash
         run: |
           flutter pub get
-          dart run build_runner build -d --low-resources
+          dart run build_runner build -d --low-resources-mode
           dart setup.dart android --arch arm64
 
       - name: Upload APK
