@@ -10,7 +10,6 @@ import 'package:image_picker/image_picker.dart';
 class HomeBackgroundState {
   final String? light;
   final String? dark;
-<<<<<<< HEAD
   final double blur; // 0.0 = no blur, 1.0 = max blur
 
   const HomeBackgroundState({
@@ -18,16 +17,11 @@ class HomeBackgroundState {
     this.dark,
     this.blur = 0.0,
   });
-=======
-
-  const HomeBackgroundState({this.light, this.dark});
->>>>>>> origin/main
 
   String? pathOf(Brightness brightness) {
     return brightness == Brightness.dark ? dark : light;
   }
 
-<<<<<<< HEAD
   HomeBackgroundState copyWith({
     String? light,
     String? dark,
@@ -37,12 +31,6 @@ class HomeBackgroundState {
       light: light ?? this.light,
       dark: dark ?? this.dark,
       blur: blur ?? this.blur,
-=======
-  HomeBackgroundState copyWith({String? light, String? dark}) {
-    return HomeBackgroundState(
-      light: light ?? this.light,
-      dark: dark ?? this.dark,
->>>>>>> origin/main
     );
   }
 }
@@ -62,10 +50,7 @@ class HomeBackgroundNotifier extends StateNotifier<HomeBackgroundState> {
     state = HomeBackgroundState(
       light: prefs?.getString(homeBackgroundLightKey),
       dark: prefs?.getString(homeBackgroundDarkKey),
-<<<<<<< HEAD
       blur: (prefs?.getDouble(homeBackgroundBlurKey) ?? 0.0).clamp(0.0, 1.0),
-=======
->>>>>>> origin/main
     );
   }
 
@@ -110,11 +95,7 @@ class HomeBackgroundNotifier extends StateNotifier<HomeBackgroundState> {
     final path = state.pathOf(brightness);
     if (path != null) {
       try {
-<<<<<<< HEAD
         final file = File(path);
-=======
-        final file = File(path!);
->>>>>>> origin/main
         if (await file.exists()) {
           await file.delete();
         }
@@ -123,7 +104,6 @@ class HomeBackgroundNotifier extends StateNotifier<HomeBackgroundState> {
     await _persist(brightness, null);
   }
 
-<<<<<<< HEAD
   Future<void> updateBlur(double value) async {
     state = state.copyWith(blur: value);
     final prefs = await preferences.sharedPreferencesCompleter.future;
@@ -134,12 +114,6 @@ class HomeBackgroundNotifier extends StateNotifier<HomeBackgroundState> {
     state = brightness == Brightness.dark
         ? HomeBackgroundState(light: state.light, dark: path, blur: state.blur)
         : HomeBackgroundState(light: path, dark: state.dark, blur: state.blur);
-=======
-  Future<void> _persist(Brightness brightness, String? path) async {
-    state = brightness == Brightness.dark
-        ? HomeBackgroundState(light: state.light, dark: path)
-        : HomeBackgroundState(light: path, dark: state.dark);
->>>>>>> origin/main
     final prefs = await preferences.sharedPreferencesCompleter.future;
     if (path == null) {
       prefs?.remove(
@@ -159,11 +133,7 @@ class HomeBackgroundNotifier extends StateNotifier<HomeBackgroundState> {
 }
 
 /// Renders a home background image (light/dark aware) behind [child],
-<<<<<<< HEAD
 /// with a scrim overlay and optional blur to keep content readable.
-=======
-/// with a scrim overlay to keep content readable.
->>>>>>> origin/main
 class HomeBackground extends ConsumerWidget {
   final Widget child;
 
@@ -179,10 +149,7 @@ class HomeBackground extends ConsumerWidget {
       return child;
     }
     final imagePath = rawPath!;
-<<<<<<< HEAD
     final blur = state.blur;
-=======
->>>>>>> origin/main
     return Stack(
       children: [
         Positioned.fill(
@@ -193,7 +160,6 @@ class HomeBackground extends ConsumerWidget {
             errorBuilder: (_, _, _) => const SizedBox(),
           ),
         ),
-<<<<<<< HEAD
         if (blur > 0.01)
           Positioned.fill(
             child: BackdropFilter(
@@ -209,13 +175,6 @@ class HomeBackground extends ConsumerWidget {
             color: brightness == Brightness.dark
                 ? Colors.black.withValues(alpha: 0.30 + blur * 0.20)
                 : Colors.white.withValues(alpha: 0.40 + blur * 0.20),
-=======
-        Positioned.fill(
-          child: ColoredBox(
-            color: brightness == Brightness.dark
-                ? Colors.black.withValues(alpha: 0.45)
-                : Colors.white.withValues(alpha: 0.55),
->>>>>>> origin/main
           ),
         ),
         Positioned.fill(child: child),
@@ -230,7 +189,6 @@ String _tr(BuildContext context, String zh, String en) {
 }
 
 void showHomeBackgroundSheet(BuildContext context) {
-<<<<<<< HEAD
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -242,15 +200,6 @@ void showHomeBackgroundSheet(BuildContext context) {
           ),
           child: _HomeBackgroundSheetBody(),
         ),
-=======
-  showSheet(
-    context: context,
-    builder: (context, type) {
-      return AdaptiveSheetScaffold(
-        type: type,
-        title: _tr(context, '首页背景', 'Home background'),
-        body: const _HomeBackgroundSheetBody(),
->>>>>>> origin/main
       );
     },
   );
@@ -262,10 +211,7 @@ class _HomeBackgroundSheetBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(homeBackgroundProvider);
-<<<<<<< HEAD
     final notifier = ref.read(homeBackgroundProvider.notifier);
-=======
->>>>>>> origin/main
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -283,7 +229,6 @@ class _HomeBackgroundSheetBody extends ConsumerWidget {
             path: state.dark,
             brightness: Brightness.dark,
           ),
-<<<<<<< HEAD
           const SizedBox(height: 20),
           Text(
             _tr(context, '背景模糊度', 'Background blur'),
@@ -314,28 +259,18 @@ class _HomeBackgroundSheetBody extends ConsumerWidget {
               ),
             ],
           ),
-=======
->>>>>>> origin/main
           const SizedBox(height: 8),
           Text(
             _tr(
               context,
-<<<<<<< HEAD
               '点击选择图片，长按清除背景；滑动调节模糊度，切换昼夜模式时自动更换对应图片。',
               'Tap to pick an image, long press to clear; drag to adjust blur; auto-switches with light/dark mode.',
-=======
-              '点击选择图片，长按清除背景；切换昼夜模式时自动更换对应图片。',
-              'Tap to pick an image, long press to clear; switches automatically with light/dark mode.',
->>>>>>> origin/main
             ),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
-<<<<<<< HEAD
           const SizedBox(height: 16),
-=======
->>>>>>> origin/main
         ],
       ),
     );
