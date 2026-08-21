@@ -13,24 +13,27 @@ class HomeBackgroundState {
   final String? dark;
   final double blur;
   final double opacity; // 遮罩透明度 0.0~1.0
+  final double cardOpacity; // 卡片透明度 0.0~1.0
 
   const HomeBackgroundState({
     this.light,
     this.dark,
     this.blur = 0.0,
     this.opacity = 0.5,
+    this.cardOpacity = 1.0,
   });
 
   String? pathOf(Brightness brightness) =>
       brightness == Brightness.dark ? dark : light;
 
   HomeBackgroundState copyWith(
-      {String? light, String? dark, double? blur, double? opacity}) {
+      {String? light, String? dark, double? blur, double? opacity, double? cardOpacity}) {
     return HomeBackgroundState(
       light: light ?? this.light,
       dark: dark ?? this.dark,
       blur: blur ?? this.blur,
       opacity: opacity ?? this.opacity,
+      cardOpacity: cardOpacity ?? this.cardOpacity,
     );
   }
 }
@@ -52,6 +55,7 @@ class HomeBackgroundNotifier extends StateNotifier<HomeBackgroundState> {
       dark: prefs?.getString(homeBackgroundDarkKey),
       blur: (prefs?.getDouble(homeBackgroundBlurKey) ?? 0.0).clamp(0.0, 1.0),
       opacity: (prefs?.getDouble(homeBackgroundOpacityKey) ?? 0.5).clamp(0.0, 1.0),
+      cardOpacity: (prefs?.getDouble(homeBackgroundCardOpacityKey) ?? 1.0).clamp(0.0, 1.0),
     );
   }
 
@@ -116,6 +120,12 @@ class HomeBackgroundNotifier extends StateNotifier<HomeBackgroundState> {
     prefs?.setDouble(homeBackgroundOpacityKey, value);
   }
 
+  Future<void> setCardOpacity(double value) async {
+    state = state.copyWith(cardOpacity: value);
+    final prefs = await preferences.sharedPreferencesCompleter.future;
+    prefs?.setDouble(homeBackgroundCardOpacityKey, value);
+  }
+
   Future<void> _persist(Brightness brightness, String? path) async {
     state = brightness == Brightness.dark
         ? HomeBackgroundState(
@@ -123,12 +133,14 @@ class HomeBackgroundNotifier extends StateNotifier<HomeBackgroundState> {
             dark: path,
             blur: state.blur,
             opacity: state.opacity,
+            cardOpacity: state.cardOpacity,
           )
         : HomeBackgroundState(
             light: path,
             dark: state.dark,
             blur: state.blur,
             opacity: state.opacity,
+            cardOpacity: state.cardOpacity,
           );
     final prefs = await preferences.sharedPreferencesCompleter.future;
     if (path == null) {
@@ -335,6 +347,42 @@ class _BackgroundSheet extends ConsumerWidget {
                       context,
                       '调节遮罩透明度可以控制背景的可见程度，0% 为完全透明（背景最清晰），100% 为完全不透明（背景完全隐藏）。',
                       'Drag to adjust overlay opacity. 0% = fully transparent, 100% = fully opaque.',
+                    ),
+                    style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                  const SizedBox(height: 20),
+                  // 卡片透明度
+                  Text(
+                    _tr(context, '卡片透明度', 'Card opacity'),
+                    style: Theme.of(ctx).textTheme.labelLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.layers, size: 18,
+                          color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                      Expanded(
+                        child: Slider(
+                          value: state.cardOpacity,
+                          min: 0.0,
+                          max: 1.0,
+                          divisions: 10,
+                          label: '${(state.cardOpacity * 100).round()}%',
+                          onChanged: (v) => notifier.setCardOpacity(v),
+                        ),
+                      ),
+                      Icon(Icons.layers_outlined, size: 18,
+                          color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _tr(
+                      context,
+                      '调节卡片透明度可以控制小组件的透明程度，降低透明度可以让背景更明显。',
+                      'Drag to adjust card opacity. Lower values make the background more visible through the cards.',
                     ),
                     style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
                           color: Theme.of(ctx).colorScheme.onSurfaceVariant,

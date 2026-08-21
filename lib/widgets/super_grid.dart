@@ -18,6 +18,7 @@ class SuperGrid extends StatefulWidget {
   final double crossAxisSpacing;
   final int crossAxisCount;
   final VoidCallback? onUpdate;
+  final double cardOpacity;
 
   const SuperGrid({
     super.key,
@@ -26,6 +27,7 @@ class SuperGrid extends StatefulWidget {
     this.mainAxisSpacing = 0,
     this.crossAxisSpacing = 0,
     this.onUpdate,
+    this.cardOpacity = 1.0,
   });
 
   @override
@@ -506,10 +508,14 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
       child: Builder(
         builder: (context) {
           _itemContexts[index] = context;
+          Widget cardWidget = CommonCard(child: child);
+          if (widget.cardOpacity < 1.0) {
+            cardWidget = Opacity(opacity: widget.cardOpacity, child: cardWidget);
+          }
           final childWhenDragging = ActivateBox(
             child: Opacity(
               opacity: 0.6,
-              child: _buildSizeBox(CommonCard(child: child), index),
+              child: _buildSizeBox(cardWidget, index),
             ),
           );
           final feedback = ActivateBox(

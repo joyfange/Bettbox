@@ -51,6 +51,7 @@ const homeBackgroundLightKey = 'home_background_light';
 const homeBackgroundDarkKey = 'home_background_dark';
 const homeBackgroundBlurKey = 'home_background_blur';
 const homeBackgroundOpacityKey = 'home_background_opacity';
+const homeBackgroundCardOpacityKey = 'home_background_card_opacity';
 const double dialogCommonWidth = 300;
 const repository = 'appshubcc/Bettbox';
 const defaultExternalController = '127.0.0.1:9090';

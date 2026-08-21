@@ -254,6 +254,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                             crossAxisCount: columns,
                             crossAxisSpacing: spacing,
                             mainAxisSpacing: spacing,
+                            cardOpacity: ref.watch(homeBackgroundProvider).cardOpacity,
                             children: [
                               ...dashboardState.dashboardWidgets
                                   .where(
