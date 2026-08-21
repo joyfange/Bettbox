@@ -3,6 +3,8 @@ import 'dart:math';
 
 import 'package:bett_box/state.dart';
 
+import 'package:bett_box/views/dashboard/background.dart';
+
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:bett_box/common/common.dart';
 import 'package:bett_box/enum/enum.dart';
@@ -109,6 +111,13 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               )
             : SizedBox();
       }),
+      IconButton(
+        tooltip: '背景',
+        onPressed: () {
+          showHomeBackgroundSheet(context);
+        },
+        icon: const Icon(Icons.wallpaper),
+      ),
       Material(
         type: MaterialType.transparency,
         shape: const CircleBorder(),
@@ -227,7 +236,8 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       title:
           ref.watch(customDashboardTitleProvider) ?? appLocalizations.dashboard,
       actions: _buildActions(),
-      body: Align(
+      body: HomeBackground(
+        child: Align(
         alignment: Alignment.topCenter,
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16).copyWith(
@@ -283,6 +293,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
