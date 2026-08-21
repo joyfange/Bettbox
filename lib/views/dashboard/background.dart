@@ -84,7 +84,7 @@ class HomeBackgroundNotifier extends StateNotifier<HomeBackgroundState> {
     final path = state.pathOf(brightness);
     if (path != null) {
       try {
-        final file = File(path);
+        final file = File(path!);
         if (await file.exists()) {
           await file.delete();
         }
@@ -126,16 +126,17 @@ class HomeBackground extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(homeBackgroundProvider);
     final brightness = Theme.of(context).brightness;
-    final path = state.pathOf(brightness);
-    final hasImage = path != null && File(path).existsSync();
+    final rawPath = state.pathOf(brightness);
+    final hasImage = rawPath != null && File(rawPath!).existsSync();
     if (!hasImage) {
       return child;
     }
+    final imagePath = rawPath!;
     return Stack(
       children: [
         Positioned.fill(
           child: Image.file(
-            File(path),
+            File(imagePath),
             fit: BoxFit.cover,
             gaplessPlayback: true,
             errorBuilder: (_, _, _) => const SizedBox(),
@@ -226,9 +227,10 @@ class _BackgroundTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(homeBackgroundProvider.notifier);
-    final hasImage = path != null && File(path).existsSync();
-    final imagePath = path;
-    return GestureDetector(      onLongPress: () {
+    final hasImage = path != null && File(path!).existsSync();
+    final tilePath = path!;
+    return GestureDetector(
+      onLongPress: () {
         HapticFeedback.lightImpact();
         notifier.clear(brightness);
       },
@@ -244,7 +246,7 @@ class _BackgroundTile extends ConsumerWidget {
             ),
             image: hasImage
                 ? DecorationImage(
-                    image: FileImage(File(imagePath!)),
+                    image: FileImage(File(tilePath)),
                     fit: BoxFit.cover,
                   )
                 : null,
