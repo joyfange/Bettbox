@@ -12,18 +12,25 @@ class HomeBackgroundState {
   final String? light;
   final String? dark;
   final double blur;
+  final double opacity; // 遮罩透明度 0.0~1.0
 
-  const HomeBackgroundState({this.light, this.dark, this.blur = 0.0});
+  const HomeBackgroundState({
+    this.light,
+    this.dark,
+    this.blur = 0.0,
+    this.opacity = 0.5,
+  });
 
   String? pathOf(Brightness brightness) =>
       brightness == Brightness.dark ? dark : light;
 
   HomeBackgroundState copyWith(
-      {String? light, String? dark, double? blur}) {
+      {String? light, String? dark, double? blur, double? opacity}) {
     return HomeBackgroundState(
       light: light ?? this.light,
       dark: dark ?? this.dark,
       blur: blur ?? this.blur,
+      opacity: opacity ?? this.opacity,
     );
   }
 }
@@ -44,6 +51,7 @@ class HomeBackgroundNotifier extends StateNotifier<HomeBackgroundState> {
       light: prefs?.getString(homeBackgroundLightKey),
       dark: prefs?.getString(homeBackgroundDarkKey),
       blur: (prefs?.getDouble(homeBackgroundBlurKey) ?? 0.0).clamp(0.0, 1.0),
+      opacity: (prefs?.getDouble(homeBackgroundOpacityKey) ?? 0.5).clamp(0.0, 1.0),
     );
   }
 
@@ -102,10 +110,26 @@ class HomeBackgroundNotifier extends StateNotifier<HomeBackgroundState> {
     prefs?.setDouble(homeBackgroundBlurKey, value);
   }
 
+  Future<void> setOpacity(double value) async {
+    state = state.copyWith(opacity: value);
+    final prefs = await preferences.sharedPreferencesCompleter.future;
+    prefs?.setDouble(homeBackgroundOpacityKey, value);
+  }
+
   Future<void> _persist(Brightness brightness, String? path) async {
     state = brightness == Brightness.dark
-        ? HomeBackgroundState(light: state.light, dark: path, blur: state.blur)
-        : HomeBackgroundState(light: path, dark: state.dark, blur: state.blur);
+        ? HomeBackgroundState(
+            light: state.light,
+            dark: path,
+            blur: state.blur,
+            opacity: state.opacity,
+          )
+        : HomeBackgroundState(
+            light: path,
+            dark: state.dark,
+            blur: state.blur,
+            opacity: state.opacity,
+          );
     final prefs = await preferences.sharedPreferencesCompleter.future;
     if (path == null) {
       prefs?.remove(brightness == Brightness.dark
@@ -152,9 +176,7 @@ class HomeBackground extends ConsumerWidget {
           ),
         Positioned.fill(
           child: ColoredBox(
-            color: brightness == Brightness.dark
-                ? Colors.black.withValues(alpha: 0.30 + blur * 0.20)
-                : Colors.white.withValues(alpha: 0.40 + blur * 0.20),
+            color: Colors.black.withValues(alpha: state.opacity),
           ),
         ),
         Positioned.fill(child: child),
@@ -275,6 +297,42 @@ class _BackgroundSheet extends ConsumerWidget {
                       context,
                       '调节模糊度可以降低背景对操作界面的干扰，0% 为原图清晰度，100% 为最强模糊。',
                       'Drag to adjust blur. 0% = sharp, 100% = maximum blur.',
+                    ),
+                    style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                  const SizedBox(height: 20),
+                  // 遮罩透明度
+                  Text(
+                    _tr(context, '卡片遮罩透明度', 'Overlay opacity'),
+                    style: Theme.of(ctx).textTheme.labelLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.opacity, size: 18,
+                          color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                      Expanded(
+                        child: Slider(
+                          value: state.opacity,
+                          min: 0.0,
+                          max: 1.0,
+                          divisions: 10,
+                          label: '${(state.opacity * 100).round()}%',
+                          onChanged: (v) => notifier.setOpacity(v),
+                        ),
+                      ),
+                      Icon(Icons.opacity_outlined, size: 18,
+                          color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _tr(
+                      context,
+                      '调节遮罩透明度可以控制背景的可见程度，0% 为完全透明（背景最清晰），100% 为完全不透明（背景完全隐藏）。',
+                      'Drag to adjust overlay opacity. 0% = fully transparent, 100% = fully opaque.',
                     ),
                     style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
                           color: Theme.of(ctx).colorScheme.onSurfaceVariant,
