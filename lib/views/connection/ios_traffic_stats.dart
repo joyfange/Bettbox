@@ -335,7 +335,7 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isOverLimit 
-                ? Colors.red.withValues(alpha: 0.05 + 0.1 * sin(DateTime.now().millisecondsSinceEpoch / 200))
+                ? Colors.red.withValues(alpha: 0.1)
                 : Colors.white,
             boxShadow: [
               BoxShadow(
