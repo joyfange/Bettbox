@@ -574,22 +574,19 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
                   builder: (context, snapshot) {
                     final bytes = snapshot.data;
                     if (bytes != null) {
-                      return Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: iconColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
-                          child: Image.memory(
-                            bytes,
-                            width: 48,
-                            height: 48,
-                            fit: BoxFit.contain,
-                            errorBuilder: (_, __, ___) => _buildFallbackIcon(appName, iconColor),
+                      final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+                      final cacheSize = (42 * devicePixelRatio).ceil();
+                      return RepaintBoundary(
+                        child: Image(
+                          image: ResizeImage(
+                            MemoryImage(bytes),
+                            width: cacheSize,
+                            height: cacheSize,
+                            allowUpscaling: false,
                           ),
+                          width: 42,
+                          height: 42,
+                          gaplessPlayback: true,
                         ),
                       );
                     }
