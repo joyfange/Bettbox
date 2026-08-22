@@ -53,7 +53,6 @@ const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.outboundMode,
   DashboardWidget.networkDetection,
   DashboardWidget.intranetIp,
-  DashboardWidget.trafficUsage,
   DashboardWidget.memoryInfo,
   DashboardWidget.connectionsCount,
   DashboardWidget.startButton,
@@ -62,7 +61,6 @@ const List<DashboardWidget> defaultDashboardWidgets = [
 const List<DashboardWidget> defaultAndroidDashboardWidgets = [
   DashboardWidget.outboundModeV2,
   DashboardWidget.networkSpeed,
-  DashboardWidget.trafficUsage,
   DashboardWidget.networkDetection,
   DashboardWidget.connectionsCount,
   DashboardWidget.memoryInfo,
