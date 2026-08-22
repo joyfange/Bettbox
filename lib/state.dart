@@ -97,6 +97,9 @@ class GlobalState {
     );
     await _initDynamicColor();
     await init();
+    if (system.isAndroid) {
+      _syncVpnState();
+    }
   }
 
   Future<String?> _calcCoreSHA256() async {

@@ -303,7 +303,6 @@ enum DashboardWidget {
   ),
   outboundModeV2(GridItem(crossAxisCellCount: 8, child: OutboundModeV2())),
   outboundMode(GridItem(crossAxisCellCount: 4, child: OutboundMode())),
-  trafficUsage(GridItem(crossAxisCellCount: 4, child: TrafficUsage())),
   networkDetection(GridItem(crossAxisCellCount: 4, child: NetworkDetection())),
   tunButton(
     GridItem(crossAxisCellCount: 4, child: TUNButton()),
@@ -386,7 +385,7 @@ extension PageLabelExtension on PageLabel {
       case PageLabel.connections:
         return appLocalizations.navConnections;
       case PageLabel.iosTrafficStats:
-        return 'iOS流量';
+        return '流量统计';
     }
   }
 }
