@@ -131,17 +131,19 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
 
   Future<Uint8List?> _loadIcon(String? packageName) async {
     if (packageName == null || packageName.isEmpty) return null;
+    // 先检查缓存
     if (_iconCache.containsKey(packageName)) return _iconCache[packageName];
     try {
+      // 调用原生方法获取图标
       final bytes = await app.getPackageIcon(packageName);
-      if (bytes != null) {
+      if (bytes != null && bytes.isNotEmpty) {
         _iconCache[packageName] = bytes;
         return bytes;
       }
-    } catch (_) {
-      // Silent fail
+    } catch (e) {
+      // 静默失败
     }
-    // 不缓存 null，以便下次重试
+    // 不缓存 null，下次重试
     return null;
   }
 
