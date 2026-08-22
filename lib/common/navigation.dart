@@ -86,7 +86,7 @@ class Navigation {
         icon: Icon(Icons.traffic),
         label: PageLabel.iosTrafficStats,
         builder: (_) => IOSTrafficStatsPage(key: const GlobalObjectKey(PageLabel.iosTrafficStats)),
-        modes: [NavigationItemMode.desktop, NavigationItemMode.more],
+        modes: [NavigationItemMode.mobile, NavigationItemMode.desktop, NavigationItemMode.more],
       ),
     ];
   }
