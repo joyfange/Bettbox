@@ -107,18 +107,14 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
   }
 
   void _updateRingProgress() {
-    int totalUp = 0, totalDown = 0;
-    for (final info in _connections) {
-      totalUp += info.upload;
-      totalDown += info.download;
-    }
-    final total = totalUp + totalDown;
-    _ringProgress = total > _trafficLimit ? 1.0 : (total / _trafficLimit).clamp(0.0, 1.0);
+    final trafficData = _getTrafficData();
+    _ringProgress = trafficData.total > _trafficLimit ? 1.0 : (trafficData.total / _trafficLimit).clamp(0.0, 1.0);
   }
 
   void _togglePeriod() {
     setState(() {
       _isWeekly = !_isWeekly;
+      _updateRingProgress();
     });
     _ringAnimationController.forward(from: 0);
     _listAnimationController.forward(from: 0);
@@ -285,36 +281,54 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
   Widget _buildPeriodToggle() {
     return Center(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
         decoration: BoxDecoration(
           color: Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildToggleChip('今日', !_isWeekly),
-            _buildToggleChip('本周', _isWeekly),
+            _buildToggleChip('今日', !_isWeekly, () {
+              if (_isWeekly) _togglePeriod();
+            }),
+            _buildToggleChip('本周', _isWeekly, () {
+              if (!_isWeekly) _togglePeriod();
+            }),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildToggleChip(String label, bool selected) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      decoration: BoxDecoration(
-        color: selected ? const Color(0xFFFF9500) : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: selected ? Colors.white : Colors.grey.shade600,
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
+  Widget _buildToggleChip(String label, bool selected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFFF9500) : Colors.transparent,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFFF9500).withValues(alpha: 0.35),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : Colors.grey.shade600,
+            fontWeight: FontWeight.w700,
+            fontSize: 15,
+            letterSpacing: 0.3,
+          ),
         ),
       ),
     );
@@ -324,24 +338,24 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
   Widget _buildRingChart(int total, bool isOverLimit) {
     final percentage = _ringProgress;
     final displayTotal = TrafficValue(value: total).show;
-    
+
     return AnimatedBuilder(
       animation: _ringAnimation,
       builder: (context, child) {
         final animatedProgress = percentage * _ringAnimation.value;
         return Container(
-          width: 200,
-          height: 200,
+          width: 240,
+          height: 240,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isOverLimit 
-                ? Colors.red.withValues(alpha: 0.1)
+            color: isOverLimit
+                ? Colors.red.withValues(alpha: 0.08)
                 : Colors.white,
             boxShadow: [
               BoxShadow(
-                color: (isOverLimit ? Colors.red : const Color(0xFFFF9500)).withValues(alpha: 0.15),
-                blurRadius: 20,
-                spreadRadius: 2,
+                color: (isOverLimit ? Colors.red : const Color(0xFFFF9500)).withValues(alpha: 0.2),
+                blurRadius: 28,
+                spreadRadius: 4,
               ),
             ],
           ),
@@ -350,7 +364,7 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
             children: [
               // 背景圆环
               CustomPaint(
-                size: const Size(200, 200),
+                size: const Size(240, 240),
                 painter: _RingBackgroundPainter(
                   progress: animatedProgress,
                   isOverLimit: isOverLimit,
@@ -364,16 +378,19 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
                   Text(
                     displayTotal,
                     style: TextStyle(
-                      fontSize: 32,
+                      fontSize: 38,
                       fontWeight: FontWeight.bold,
                       color: isOverLimit ? Colors.red : Colors.black87,
+                      letterSpacing: -0.5,
                     ),
                   ),
+                  const SizedBox(height: 4),
                   Text(
                     '总流量',
                     style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
+                      fontSize: 15,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
@@ -415,15 +432,15 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
 
   Widget _buildDetailCard(String label, String value, Color color, IconData icon) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -432,24 +449,26 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
         children: [
           Row(
             children: [
-              Icon(icon, color: color, size: 18),
-              const SizedBox(width: 6),
+              Icon(icon, color: color, size: 22),
+              const SizedBox(width: 8),
               Text(
                 label,
                 style: TextStyle(
                   color: Colors.grey.shade600,
-                  fontSize: 12,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             value,
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 26,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
+              letterSpacing: -0.5,
             ),
           ),
         ],
@@ -500,7 +519,7 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
     required int index,
   }) {
     final iconColor = Colors.primaries[appName.hashCode.abs() % Colors.primaries.length];
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -512,12 +531,12 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
         margin: EdgeInsets.only(bottom: isSelected ? 0 : 8),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -527,25 +546,25 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
             children: [
               ListTile(
                 dense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 leading: FutureBuilder<Uint8List?>(
                   future: _loadIcon(pkg),
                   builder: (context, snapshot) {
                     final bytes = snapshot.data;
                     if (bytes != null) {
                       return Container(
-                        width: 40,
-                        height: 40,
+                        width: 48,
+                        height: 48,
                         decoration: BoxDecoration(
-                          color: iconColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
+                          color: iconColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(14),
                           child: Image.memory(
                             bytes,
-                            width: 40,
-                            height: 40,
+                            width: 48,
+                            height: 48,
                             fit: BoxFit.contain,
                             errorBuilder: (_, __, ___) => _buildFallbackIcon(appName, iconColor),
                           ),
@@ -557,14 +576,14 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
                 ),
                 title: Text(
                   appName,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 subtitle: pkg != null && pkg.isNotEmpty
                     ? Text(
                         pkg,
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       )
@@ -575,11 +594,11 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
                   children: [
                     Text(
                       TrafficValue(value: total).show,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                     ),
                     Text(
                       '↑${TrafficValue(value: up).show} ↓${TrafficValue(value: down).show}',
-                      style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+                      style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
                     ),
                   ],
                 ),
@@ -590,18 +609,18 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
                   duration: const Duration(milliseconds: 200),
                   curve: Curves.easeOut,
                   child: Container(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Divider(height: 1),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 14),
                         _buildDetailRow('上行流量', TrafficValue(value: up).show, Colors.red),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
                         _buildDetailRow('下行流量', TrafficValue(value: down).show, Colors.green),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
                         _buildDetailRow('总流量', TrafficValue(value: total).show, Colors.blue),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
                         _buildDetailRow('占比', '${((total / _getTrafficData().total) * 100).toStringAsFixed(1)}%', Colors.orange),
                       ],
                     ),
@@ -618,8 +637,8 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
-        Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color)),
+        Text(label, style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
+        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color)),
       ],
     );
   }
@@ -627,11 +646,11 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
   Widget _buildFallbackIcon(String label, Color color) {
     final letter = label.isNotEmpty ? label[0].toUpperCase() : '?';
     return Container(
-      width: 40,
-      height: 40,
+      width: 48,
+      height: 48,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(10),
+        color: color.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Center(
         child: Text(
@@ -639,7 +658,7 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
           style: TextStyle(
             color: color,
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: 20,
           ),
         ),
       ),
