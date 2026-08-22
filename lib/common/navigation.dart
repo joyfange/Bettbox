@@ -82,6 +82,12 @@ class Navigation {
         builder: (_) => ToolsView(key: const GlobalObjectKey(PageLabel.tools)),
         modes: [NavigationItemMode.desktop, NavigationItemMode.mobile],
       ),
+      NavigationItem(
+        icon: Icon(Icons.traffic),
+        label: PageLabel.iosTrafficStats,
+        builder: (_) => IOSTrafficStatsPage(key: const GlobalObjectKey(PageLabel.iosTrafficStats)),
+        modes: [NavigationItemMode.desktop, NavigationItemMode.more],
+      ),
     ];
   }
 

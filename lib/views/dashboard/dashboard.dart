@@ -277,11 +277,15 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                     ),
                   );
                 } else {
-                  return Grid(
-                    crossAxisCount: columns,
-                    crossAxisSpacing: spacing,
-                    mainAxisSpacing: spacing,
-                    children: [...children],
+                  final cardOpacity = ref.watch(homeBackgroundProvider).cardOpacity;
+                  return Opacity(
+                    opacity: cardOpacity,
+                    child: Grid(
+                      crossAxisCount: columns,
+                      crossAxisSpacing: spacing,
+                      mainAxisSpacing: spacing,
+                      children: [...children],
+                    ),
                   );
                 }
               }),

@@ -361,6 +361,7 @@ enum PageLabel {
   resources,
   script,
   connections,
+  iosTrafficStats,
 }
 
 extension PageLabelExtension on PageLabel {
@@ -384,6 +385,8 @@ extension PageLabelExtension on PageLabel {
         return appLocalizations.script;
       case PageLabel.connections:
         return appLocalizations.navConnections;
+      case PageLabel.iosTrafficStats:
+        return 'iOS流量';
     }
   }
 }
