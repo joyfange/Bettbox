@@ -151,9 +151,26 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
   Map<String, Map<String, dynamic>> _aggregateAppTraffic() {
     final Map<String, Map<String, dynamic>> appTraffic = {};
     for (final info in _connections) {
-      final appName = info.metadata.process.isEmpty ? '未知应用' : info.metadata.process;
-      final pkg = _extractPackageName(info.metadata.processPath);
-      appTraffic.putIfAbsent(appName, () => {'up': 0, 'down': 0, 'pkg': pkg, 'icon': null});
+      final process = info.metadata.process;
+      final processPath = info.metadata.processPath;
+
+      // 优先使用 process 作为包名（Android 应用 process 通常就是包名）
+      String appName;
+      String? pkg;
+
+      if (process.isNotEmpty) {
+        appName = process;
+        pkg = process;
+      } else if (processPath.isNotEmpty) {
+        final extracted = _extractPackageName(processPath);
+        appName = extracted ?? '未知应用';
+        pkg = extracted;
+      } else {
+        appName = '未知应用';
+        pkg = null;
+      }
+
+      appTraffic.putIfAbsent(appName, () => {'up': 0, 'down': 0, 'pkg': pkg});
       appTraffic[appName]!['up'] = (appTraffic[appName]!['up'] ?? 0) + info.upload;
       appTraffic[appName]!['down'] = (appTraffic[appName]!['down'] ?? 0) + info.download;
     }
