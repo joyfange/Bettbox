@@ -123,7 +123,7 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
   /// 从 processPath 提取包名
   String? _extractPackageName(String processPath) {
     if (processPath.isEmpty) return null;
-    final match = RegExp(r'/data/app/(?:~~[a-zA-Z0-9]+/)?([a-zA-Z0-9_.]+)(?:/|$)').firstMatch(processPath);
+    final match = RegExp(r'/data/app/(?:~~[a-zA-Z0-9]+/)?([a-zA-Z0-9_.\-]+)(?:/|$)').firstMatch(processPath);
     if (match != null) return match.group(1);
     final last = processPath.split('/').last;
     return last.contains('.') ? last.substring(0, last.lastIndexOf('.')) : last;
@@ -134,12 +134,15 @@ class _IOSTrafficStatsPageState extends ConsumerState<IOSTrafficStatsPage>
     if (_iconCache.containsKey(packageName)) return _iconCache[packageName];
     try {
       final bytes = await app.getPackageIcon(packageName);
-      _iconCache[packageName] = bytes;
-      return bytes;
+      if (bytes != null) {
+        _iconCache[packageName] = bytes;
+        return bytes;
+      }
     } catch (_) {
-      _iconCache[packageName] = null;
-      return null;
+      // Silent fail
     }
+    // 不缓存 null，以便下次重试
+    return null;
   }
 
   /// 按应用聚合流量

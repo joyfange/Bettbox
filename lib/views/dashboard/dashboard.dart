@@ -478,6 +478,16 @@ class _DashboardStartSwitchState extends ConsumerState<_DashboardStartSwitch> {
   bool _isDisabled = false;
   bool? _optimisticStart;
   FocusNode? _focusNode;
+}
+
+class _DashboardStartSwitch extends ConsumerStatefulWidget {
+  const _DashboardStartSwitch({super.key});
+
+  @override
+  ConsumerState<_DashboardStartSwitch> createState() => _DashboardStartSwitchState();
+}
+
+class _DashboardStartSwitchState extends ConsumerState<_DashboardStartSwitch> {
 
   @override
   void initState() {
